@@ -1,0 +1,50 @@
+---
+- name: passlib package
+  pip:
+    name: passlib
+
+- name: Making Nagios Directory
+  file:
+    path: ~/nagios
+    state: directory
+
+- name: Installing Nagios in CentOS
+  yum:
+    name:
+      - nagios
+    state: latest
+  when: ansible_distribution == "CentOS"
+
+- name: Download Plugins
+  unarchive:
+    src: https://github.com/nagios-plugins/nagios-plugins/archive/release-2.2.1.tar.gz
+    dest: ~/nagios
+    remote_src: yes
+    mode: 0777
+    owner: root
+    group: root
+
+- name: Install Other Needed Ext.
+  shell:
+    find ~/nagios -type d -name "nagioscore-*" -execdir sh -c 'cd {} && sudo ./configure --with-httpd-conf=/etc/apache2/sites-enabled && sudo make all && sudo make install-groups-users && sudo usermod -a -G nagios www-data && sudo make install && sudo make install-daemoninit && systemctl enable httpd.service && sudo make install-commandmode && sudo make install-config && sudo make install-webconf' \;
+- name: Installing Plugins
+  shell:
+    cd ~/nagios/nagios-plugins*
+    ./tools/setup
+    ./configure
+    make
+    make install
+
+- name: start nagios
+  service:
+    name: nagios
+    state: restarted
+    enabled: true
+
+- name: Starting httpd
+  service: 
+    name: httpd
+    state: restarted
+    enabled: true
+
+

@@ -1,0 +1,28 @@
+---
+- hosts: all
+  become: true
+  pre_tasks:
+
+  - name: update repository index (CentOS)
+    tags: always
+    package:
+      update_cache: yes 
+    changed_when: false
+    when: ansible_distribution == "CentOS"
+
+  - name: install updates (Ubuntu)
+    tags: always
+    apt:
+      update_cache: yes
+    changed_when: false
+    when: ansible_distribution == "Ubuntu"
+
+- hosts: Nagios_Ubuntu
+  become: true
+  roles:
+    - Nagios_Ubuntu
+
+- hosts: Nagios_CentOS
+  become: true
+  roles:
+    - Nagios_CentOS
